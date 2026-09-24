@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RADAR CASA — Dashboard comunale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest-dashboard.webmanifest">
+<meta name="theme-color" content="#070B10">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RADAR CASA">
+<style>
+:root{
+  --bg:#070B10;
+  --surface:#0E1620;
+  --surface-2:#131E2A;
+  --line:#1C2A38;
+  --text:#E6F1F7;
+  --muted:#7E93A3;
+  --cyan:#00E5FF;
+  --cyan-dim:rgba(0,229,255,.12);
+  --nuova:#00E5FF;
+  --carico:#FFB020;
+  --risolta:#34D399;
+  --respinta:#64748B;
+  --display:"Space Grotesk",system-ui,sans-serif;
+  --body:"Inter",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --r:10px;
+  --ciano:var(--cyan);--panel:var(--surface);--linea:var(--line);--testo:var(--text);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:4px}
+
+/* ---------- Header ---------- */
+.topbar{
+  display:flex;align-items:center;gap:16px;
+  padding:14px 20px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#0B131C,#070B10);
+  position:sticky;top:0;z-index:30;
+}
+.brand{display:flex;align-items:center;gap:11px}
+.brand h1{
+  font-family:var(--display);font-weight:700;font-size:19px;
+  letter-spacing:.22em;margin:0;
+}
+.brand h1 span{color:var(--ciano)}
+.brand .sub{
+  font-family:var(--mono);font-size:10px;color:var(--muted);
+  letter-spacing:.12em;text-transform:uppercase;margin-top:-2px;
+}
+.comune{
+  margin-left:auto;text-align:right;
+}
+.comune .nome{font-family:var(--display);font-weight:500;font-size:14px}
+.comune .ruolo{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em}
+.live{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  color:var(--cyan);text-transform:uppercase;
+  padding:5px 10px;border:1px solid rgba(0,229,255,.25);border-radius:99px;
+  background:var(--cyan-dim);
+}
+.live .dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ---------- Layout ---------- */
+.shell{
+  display:grid;
+  grid-template-columns:300px minmax(0,1fr) 380px;
+  gap:1px;background:var(--line);
+  min-height:calc(100vh - 61px);
+}
+.col{background:var(--bg);min-width:0}
+.scroll{overflow-y:auto;max-height:calc(100vh - 61px)}
+
+/* ---------- Scope (elemento firma) ---------- */
+.scope-wrap{padding:20px 18px 14px}
+.scope{position:relative;width:100%;aspect-ratio:1;max-width:264px;margin:0 auto}
+.scope svg{width:100%;height:100%;display:block}
+.sweep{transform-origin:150px 150px;animation:spin 5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.blip{cursor:pointer;transition:r .15s ease}
+.blip:hover circle,.blip.on circle{r:7}
+.scope-legend{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:9.5px;color:var(--muted);
+  letter-spacing:.08em;margin-top:10px;padding:0 4px;
+}
+
+/* ---------- Filtri ---------- */
+.side-sec{padding:16px 18px;border-top:1px solid var(--line)}
+.side-sec h2{
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:500;
+}
+.stat{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:9px 11px;border-radius:var(--r);
+  border:1px solid transparent;text-align:left;margin-bottom:5px;
+  transition:background .12s,border-color .12s;
+}
+.stat:hover{background:var(--surface)}
+.stat[aria-pressed="true"]{background:var(--surface-2);border-color:var(--line)}
+.stat .sq{width:8px;height:8px;border-radius:2px;flex:none}
+.stat .lb{flex:1;font-size:13px}
+.stat .n{font-family:var(--mono);font-size:14px;color:var(--muted)}
+.stat[aria-pressed="true"] .n{color:var(--text)}
+
+.ghost{
+  width:100%;padding:9px;border:1px solid var(--line);border-radius:var(--r);
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);transition:border-color .12s,color .12s;
+}
+.ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* ---------- Lista ---------- */
+.list-head{
+  display:flex;gap:10px;align-items:center;
+  padding:16px 20px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--bg);z-index:10;
+}
+.search{
+  flex:1;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:9px 12px;color:var(--text);
+  font-family:var(--body);font-size:13px;
+}
+.search::placeholder{color:var(--muted)}
+.search:focus{outline:none;border-color:var(--cyan)}
+select.search{cursor:pointer;flex:none;width:150px}
+
+.cards{padding:12px}
+.card{
+  display:block;width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--line);
+  border-left:3px solid var(--line);
+  border-radius:var(--r);padding:13px 15px;margin-bottom:9px;
+  transition:border-color .12s,transform .12s;
+}
+.card:hover{transform:translateX(2px)}
+.card.on{background:var(--surface-2);border-color:rgba(0,229,255,.35)}
+.card-top{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.code{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
+.badge{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 8px;border-radius:99px;border:1px solid currentColor;
+}
+.when{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.card h3{font-family:var(--display);font-weight:500;font-size:15px;margin:0 0 3px}
+.addr{font-size:12.5px;color:var(--muted);margin:0}
+.tags{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.tag{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+  color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:2px 6px;
+}
+.tag.anon{color:var(--carico);border-color:rgba(255,176,32,.3)}
+
+.empty{padding:60px 24px;text-align:center;color:var(--muted)}
+.empty strong{display:block;font-family:var(--display);color:var(--text);font-size:16px;margin-bottom:6px;font-weight:500}
+
+/* ---------- Dettaglio ---------- */
+.detail{padding:20px}
+.detail-head{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px}
+.detail-head .code{display:block;margin-bottom:7px}
+.detail-head h2{font-family:var(--display);font-weight:500;font-size:20px;margin:0 0 8px;line-height:1.25}
+.media{
+  aspect-ratio:4/3;border-radius:var(--r);border:1px solid var(--line);
+  background:
+    repeating-linear-gradient(45deg,#101A24 0 12px,#0D151E 12px 24px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;color:var(--muted);margin-bottom:14px;
+}
+.media .mono{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.audio{
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:11px 13px;margin-bottom:14px;
+}
+.play{
+  width:32px;height:32px;border-radius:50%;flex:none;
+  border:1px solid rgba(0,229,255,.35);color:var(--cyan);
+  display:flex;align-items:center;justify-content:center;background:var(--cyan-dim);
+}
+.wave{flex:1;display:flex;align-items:center;gap:2px;height:24px}
+.wave span{flex:1;background:rgba(0,229,255,.35);border-radius:1px}
+
+.field{margin-bottom:15px}
+.field .k{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;
+}
+.field .v{font-size:13.5px}
+.field .v.mono{font-family:var(--mono);font-size:12px}
+.quote{
+  background:var(--surface);border-left:2px solid var(--cyan);
+  border-radius:0 var(--r) var(--r) 0;padding:11px 13px;font-size:13.5px;
+}
+
+.timeline{list-style:none;margin:0;padding:0 0 0 16px;border-left:1px solid var(--line)}
+.timeline li{position:relative;padding:0 0 14px 14px}
+.timeline li::before{
+  content:"";position:absolute;left:-21px;top:5px;
+  width:9px;height:9px;border-radius:50%;background:var(--line);border:2px solid var(--bg);
+}
+.timeline li:first-child::before{background:var(--cyan)}
+.timeline .t{font-size:13px}
+.timeline .m{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+
+.actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  border-top:1px solid var(--line);padding-top:16px;margin-top:4px;
+}
+.act{
+  padding:11px;border-radius:var(--r);border:1px solid var(--line);
+  font-size:12.5px;font-weight:500;transition:border-color .12s,background .12s,color .12s;
+}
+.act:hover:not(:disabled){background:var(--surface-2)}
+.act:disabled{opacity:.35;cursor:not-allowed}
+.act.primary{border-color:rgba(0,229,255,.4);color:var(--cyan);background:var(--cyan-dim)}
+.act.ok{border-color:rgba(52,211,153,.4);color:var(--risolta)}
+.act.no{color:var(--respinta)}
+.act.wide{grid-column:1/-1}
+
+textarea.note{
+  width:100%;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);color:var(--text);font-family:var(--body);font-size:13px;
+  padding:10px 12px;resize:vertical;min-height:70px;margin-top:4px;
+}
+textarea.note:focus{outline:none;border-color:var(--cyan)}
+
+.placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;min-height:400px;padding:40px;text-align:center;color:var(--muted);gap:14px;
+}
+.placeholder p{max-width:230px;margin:0;font-size:13px}
+
+.close-detail{display:none}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1180px){
+  .shell{grid-template-columns:260px minmax(0,1fr) 340px}
+}
+@media (max-width:980px){
+  .shell{display:block;background:var(--bg)}
+  .scroll{max-height:none;overflow:visible}
+  .col-side{border-bottom:1px solid var(--line)}
+  .scope-wrap{display:none}
+  .col-detail{
+    display:none;position:fixed;inset:0;z-index:50;
+    background:var(--bg);overflow-y:auto;
+  }
+  .col-detail.open{display:block}
+  .close-detail{
+    display:flex;align-items:center;gap:8px;width:100%;
+    padding:14px 20px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    position:sticky;top:0;background:var(--bg);z-index:5;
+  }
+  .comune{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
+/* --- Accesso operatori --- */
+.login{position:fixed;inset:0;z-index:200;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:24px}
+.login[hidden]{display:none}
+.login-box{width:100%;max-width:360px;background:var(--panel);
+  border:1px solid var(--linea);border-radius:14px;padding:26px 24px}
+.login-box h2{font-family:var(--display);font-size:19px;margin:14px 0 4px;font-weight:500}
+.login-box p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 18px}
+.login-box label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+.login-box input{width:100%;box-sizing:border-box;background:#0B131C;color:var(--testo);
+  border:1px solid var(--linea);border-radius:9px;padding:10px 12px;font:inherit;font-size:14px}
+.login-box input:focus{outline:none;border-color:var(--ciano)}
+.login-box button{width:100%;margin-top:20px;background:var(--ciano);color:#06131A;
+  border:0;border-radius:9px;padding:11px;font:inherit;font-weight:600;cursor:pointer}
+.login-box button:disabled{opacity:.6;cursor:default}
+.login-err{margin-top:14px;background:rgba(255,90,90,.09);border:1px solid rgba(255,90,90,.32);
+  color:#FF9B9B;border-radius:9px;padding:9px 11px;font-size:12.5px;line-height:1.45}
+.login-err[hidden]{display:none}
+
+/* --- Elementi aggiunti al dettaglio --- */
+.esci{background:none;border:0;color:var(--ciano);font:inherit;font-size:12px;
+  cursor:pointer;padding:0;text-decoration:underline}
+.media-box img{width:100%;border-radius:10px;border:1px solid var(--linea);display:block}
+.maplink{display:inline-block;margin-top:6px;color:var(--ciano);font-size:12.5px;text-decoration:none}
+.maplink:hover{text-decoration:underline}
+.err-azione{margin-top:12px;background:rgba(255,90,90,.09);border:1px solid rgba(255,90,90,.32);
+  color:#FF9B9B;border-radius:9px;padding:9px 11px;font-size:12.5px;line-height:1.45}
+.err-azione[hidden]{display:none}
+.raggr{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+  white-space:nowrap;cursor:pointer;user-select:none}
+.raggr input{accent-color:var(--ciano);cursor:pointer}
+.dupe{display:inline-flex;align-items:center;gap:5px;background:rgba(0,229,255,.1);
+  border:1px solid rgba(0,229,255,.3);color:var(--ciano);border-radius:20px;
+  padding:2px 9px;font-size:11px;font-family:var(--mono)}
+.simili-lista{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.simile{background:var(--bg);border:1px solid var(--linea);border-radius:9px;
+  padding:8px 10px;text-align:left;cursor:pointer;color:var(--testo);font:inherit;font-size:12.5px}
+.simile:hover{border-color:var(--ciano)}
+.simile .cod{font-family:var(--mono);color:var(--ciano);font-size:11px}
+.simile .qta{color:var(--muted);font-size:11px;display:block;margin-top:2px}
+
+/* --- Sezioni (Segnalazioni / Casa) e avvisi --- */
+.brand h1 span{color:inherit}
+.shell[hidden]{display:none}
+.sezioni{display:flex;gap:3px;margin-left:10px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px}
+.sez{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:99px;font-family:var(--display);font-size:13px;color:var(--muted);transition:background .12s,color .12s}
+.sez:hover{color:var(--text)}
+.sez[aria-selected="true"]{background:var(--cyan-dim);color:var(--cyan)}
+.notif{min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:#FF4C4C;color:#fff;font-family:var(--mono);font-size:10.5px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.notif[hidden]{display:none}
+.notif.pop{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.45)}100%{transform:scale(1)}}
+.campana{position:relative;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);flex:none}
+.campana:hover{border-color:var(--cyan);color:var(--cyan)}
+.campana[aria-pressed="true"]{color:var(--cyan);border-color:rgba(0,229,255,.4);background:var(--cyan-dim)}
+.campana .notif{position:absolute;top:-6px;right:-8px}
+.card.unread h3::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);margin-right:8px;vertical-align:middle}
+.card.unread{border-color:rgba(0,229,255,.28)}
+.toasts{position:fixed;right:18px;bottom:18px;z-index:120;display:flex;flex-direction:column;gap:8px;max-width:340px}
+.toast{background:var(--surface-2);border:1px solid rgba(0,229,255,.4);border-left:3px solid var(--cyan);border-radius:var(--r);padding:11px 14px;box-shadow:0 8px 24px rgba(0,0,0,.45);text-align:left;color:var(--text);animation:entra .25s ease}
+.toast .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:3px}
+.toast .t{font-size:13px}
+@keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.kpi b{display:block;font-family:var(--display);font-size:22px;font-weight:500}
+.kpi span{font-size:11.5px;color:var(--muted);line-height:1.35;display:block}
+.kpi .largo{grid-column:1/-1}
+.kpi .largo b{font-size:14px;margin-bottom:2px}
+.side-note{font-size:12.5px;color:var(--muted);margin:0 0 10px;line-height:1.5}
+.tipo-casa{color:#A78BFA;border-color:rgba(167,139,250,.35)}
+.tipo-fam{color:#F472B6;border-color:rgba(244,114,182,.35)}
+.casapin{cursor:pointer}
+.casapin path{transform-box:fill-box;transform-origin:center;transition:transform .15s ease}
+.casapin:hover path,.casapin.on path{transform:scale(1.45)}
+.casapin.on .alone{opacity:.28}
+.legenda-casa span{display:inline-flex;align-items:center;gap:5px}
+.match-row{display:flex;gap:6px;align-items:stretch}
+.match-row .simile{flex:1}
+.abbina{padding:0 12px;border-radius:9px;border:1px solid rgba(52,211,153,.4);color:var(--risolta);font-size:12px;font-weight:500}
+.abbina:hover{background:rgba(52,211,153,.08)}
+.vuota{font-size:12.5px;color:var(--muted);border:1px dashed var(--line);border-radius:9px;padding:10px 12px}
+@media (max-width:980px){
+  .sezioni{margin-left:auto}
+  .live{display:none}
+  .sez{padding:6px 10px}
+}
+@media (max-width:520px){
+  .brand > div{display:none}
+  .topbar{gap:10px;padding:12px 14px}
+}
+</style>
+</head>
+<body>
+<div class="login" id="login" hidden>
+  <form class="login-box" id="loginForm">
+    <svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="none" stroke="#00E5FF" stroke-opacity=".22" stroke-width="1.5"/>
+      <circle cx="20" cy="20" r="12" fill="none" stroke="#00E5FF" stroke-opacity=".38" stroke-width="1.5"/>
+      <circle cx="20" cy="20" r="6" fill="none" stroke="#00E5FF" stroke-opacity=".6" stroke-width="1.5"/>
+      <circle cx="20" cy="20" r="2.4" fill="#00E5FF"/>
+    </svg>
+    <h2>Accesso operatori</h2>
+    <p>Le richieste di proprietari e famiglie sono riservate al personale del Comune.</p>
+    <label for="lgEmail">Email</label>
+    <input id="lgEmail" type="email" autocomplete="username" required>
+    <label for="lgPw">Password</label>
+    <input id="lgPw" type="password" autocomplete="current-password" required>
+    <button type="submit" id="lgBtn">Entra</button>
+    <div class="login-err" id="lgErr" hidden></div>
+  </form>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="none" stroke="#00E5FF" stroke-opacity=".22" stroke-width="1.5"/>
+      <circle cx="20" cy="20" r="12" fill="none" stroke="#00E5FF" stroke-opacity=".38" stroke-width="1.5"/>
+      <path d="M13.5 21 L20 15 L26.5 21 V27 H13.5 Z" fill="#00E5FF"/>
+    </svg>
+    <div>
+      <h1>RADAR <span style="color:var(--cyan)">CASA</span></h1>
+      <div class="sub">Dashboard comunale</div>
+    </div>
+  </div>
+  <div class="live"><span class="dot"></span> In ascolto</div>
+  <button class="campana" id="btnAvvisi" aria-pressed="false" title="Attiva avvisi sonori e notifiche">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    <span class="notif" id="notifTot" hidden></span>
+  </button>
+  <div class="comune">
+    <div class="nome" id="nomeComune">Comune DEMO</div>
+    <div class="ruolo" id="ruoloOperatore">non connesso</div>
+  </div>
+</header>
+
+<div class="shell" id="vistaCasa">
+  <aside class="col col-side scroll">
+    <div class="scope-wrap">
+      <div class="scope">
+        <svg viewBox="0 0 300 300" role="img" aria-label="Radar delle case offerte e delle famiglie, raggruppate per comune">
+          <defs>
+            <linearGradient id="swCasa" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#00E5FF" stop-opacity=".28"/>
+              <stop offset="100%" stop-color="#00E5FF" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle cx="150" cy="150" r="140" fill="#0B131C" stroke="#1C2A38"/>
+          <circle cx="150" cy="150" r="105" fill="none" stroke="#1C2A38"/>
+          <circle cx="150" cy="150" r="70" fill="none" stroke="#1C2A38"/>
+          <circle cx="150" cy="150" r="35" fill="none" stroke="#1C2A38"/>
+          <line x1="10" y1="150" x2="290" y2="150" stroke="#1C2A38"/>
+          <line x1="150" y1="10" x2="150" y2="290" stroke="#1C2A38"/>
+          <g class="sweep"><path d="M150 150 L290 150 A140 140 0 0 0 251 51 Z" fill="url(#swCasa)"/></g>
+          <circle cx="150" cy="150" r="3.5" fill="#00E5FF"/>
+          <g id="casePin"></g>
+        </svg>
+      </div>
+      <div class="scope-legend legenda-casa">
+        <span><svg width="11" height="11" viewBox="-7 -8 14 15" aria-hidden="true"><path d="M-6 -1 L0 -7 L6 -1 V6 H-6 Z" fill="#7E93A3"/></svg> Case offerte</span>
+        <span><svg width="11" height="11" viewBox="-7 -8 14 15" aria-hidden="true"><path d="M-6 -1 L0 -7 L6 -1 V6 H-6 Z" fill="none" stroke="#7E93A3" stroke-width="1.6"/></svg> Famiglie</span>
+      </div>
+    </div>
+    <div class="side-sec">
+      <h2>In sintesi</h2>
+      <div class="kpi">
+        <div><b id="kCase">0</b><span>case pronte o quasi</span></div>
+        <div><b id="kFam">0</b><span>famiglie in attesa</span></div>
+        <div><b id="kAbb">0</b><span>abbinamenti fatti</span></div>
+        <div><b id="kRistr">0</b><span>case da ristrutturare</span></div>
+        <div class="largo"><b id="kFreno">—</b><span>il freno più citato dai proprietari</span></div>
+      </div>
+    </div>
+    <div class="side-sec">
+      <h2>Stato</h2>
+      <div id="filtriCasa"></div>
+    </div>
+    <div class="side-sec">
+      <h2>Modulo per i cittadini</h2>
+      <p class="side-note">Il link da diffondere a proprietari, servizi sociali e sportello.</p>
+      <button class="ghost" id="btnLinkCasa">Copia link del modulo</button>
+    </div>
+  </aside>
+
+  <main class="col scroll">
+    <div class="list-head">
+      <input class="search" id="qCasa" type="search" placeholder="Cerca per comune, zona, codice o nome…" aria-label="Cerca nelle richieste casa">
+      <select class="search" id="tipoCasa" aria-label="Filtra per tipo">
+        <option value="">Case e famiglie</option>
+        <option value="offerta">Solo case</option>
+        <option value="richiesta">Solo famiglie</option>
+      </select>
+      <select class="search" id="comuneCasa" aria-label="Filtra per comune">
+        <option value="">Tutti i comuni</option>
+      </select>
+    </div>
+    <div class="cards" id="listaCasa"></div>
+  </main>
+
+  <section class="col col-detail scroll" id="pannelloCasa">
+    <button class="close-detail" id="btnChiudiCasa">← Torna all'elenco</button>
+    <div id="dettaglioCasa"></div>
+  </section>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script>
+/* RADAR CASA — Dashboard comunale. Collegata a Supabase, accesso riservato agli operatori. */
+var SUPABASE_URL = window.SUPABASE_URL || 'https://TUO-PROGETTO.supabase.co';
+var SUPABASE_KEY = window.SUPABASE_KEY || 'TUA-CHIAVE-PUBBLICA';
+let sess = null;
+
+/* ---------- Utility ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function quando(iso){
+  const d = new Date(iso), diff = (Date.now() - d) / 60000;
+  if (diff < 60) return Math.max(1, Math.round(diff)) + " min fa";
+  if (diff < 1440) return Math.round(diff/60) + " h fa";
+  if (diff < 2880) return "ieri";
+  return Math.round(diff/1440) + " giorni fa";
+}
+function dataEstesa(iso){
+  return new Date(iso).toLocaleString("it-IT",
+    { day:"2-digit", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" });
+}
+
+/* ---------- Sessione (in memoria, con appoggio al browser se disponibile) ---------- */
+function salvaSessione(s){
+  sess = s;
+  try { sessionStorage.setItem("radarcasa_sess", JSON.stringify(s)); } catch(e){}
+}
+function leggiSessione(){
+  try {
+    const v = sessionStorage.getItem("radarcasa_sess");
+    if (v) sess = JSON.parse(v);
+  } catch(e){}
+  return sess;
+}
+function scartaSessione(){
+  sess = null;
+  try { sessionStorage.removeItem("radarcasa_sess"); } catch(e){}
+}
+
+/* ---------- Chiamate a Supabase ---------- */
+function headers(extra){
+  return Object.assign({
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + (sess ? sess.access_token : SUPABASE_KEY),
+    "Content-Type": "application/json"
+  }, extra || {});
+}
+
+function login(email, password){
+  return fetch(SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+    method: "POST",
+    headers: { "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email, password: password })
+  })
+  .then(r => r.json().then(d => ({ ok: r.ok, d: d })))
+  .then(res => {
+    if (!res.ok || !res.d.access_token){
+      throw new Error(res.d.error_description || res.d.msg || res.d.message || "Credenziali non valide");
+    }
+    salvaSessione({
+      access_token: res.d.access_token,
+      refresh_token: res.d.refresh_token,
+      email: (res.d.user && res.d.user.email) || email
+    });
+  });
+}
+
+function rinnova(){
+  if (!sess || !sess.refresh_token) return Promise.reject(new Error("nessuna sessione"));
+  return fetch(SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token", {
+    method: "POST",
+    headers: { "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: sess.refresh_token })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (!d.access_token) throw new Error("sessione scaduta");
+    salvaSessione({ access_token: d.access_token, refresh_token: d.refresh_token, email: sess.email });
+  });
+}
+
+// Esegue una chiamata autenticata; se il token è scaduto lo rinnova una volta sola.
+function api(path, opts, giaRiprovato){
+  opts = opts || {};
+  return fetch(SUPABASE_URL + path, {
+    method: opts.method || "GET",
+    headers: headers(opts.headers),
+    body: opts.body
+  }).then(r => {
+    if ((r.status === 401 || r.status === 403) && !giaRiprovato){
+      return rinnova().then(() => api(path, opts, true))
+        .catch(() => { const e = new Error("SESSIONE_SCADUTA"); throw e; });
+    }
+    if (!r.ok) return r.text().then(t => { throw new Error(t || ("Errore " + r.status)); });
+    if (r.status === 204) return null;
+    return r.json();
+  });
+}
+
+
+/* =========================================================
+   SEZIONE CASA — case sfitte offerte e famiglie che cercano casa
+   I dati arrivano dal modulo casa.html (tabella casa_richieste).
+   ========================================================= */
+
+const STATI_CASA = {
+  nuova:       { label: "Nuova",       colore: "var(--nuova)"    },
+  in_verifica: { label: "In verifica", colore: "var(--carico)"   },
+  abbinata:    { label: "Abbinata",    colore: "var(--risolta)"  },
+  chiusa:      { label: "Chiusa",      colore: "var(--respinta)" }
+};
+const STATO_CASA_TXT = { pronta: "Pronta da abitare", piccoli_lavori: "Servono piccoli lavori", da_ristrutturare: "Da ristrutturare" };
+const FRENI_TXT = { morosita: "Paura di non essere pagato", sfratto: "Tempi per riaverla", danni: "Paura di danni",
+  pratiche: "Pratiche e contratti", disposizione: "Tenerla a disposizione", agevolazioni: "Non conosce le agevolazioni" };
+const ESIG_TXT = { senza_barriere: "Casa senza barriere", animali: "Animali", arredata: "Arredata" };
+
+let CASA = [];
+let casaSel = null;
+let filtroCasa = null;
+let erroreCasa = null;
+let vista = "seg";
+
+function locali(n){ return n ? (n >= 5 ? "5+ locali" : n + (n === 1 ? " locale" : " locali")) : "locali n.d."; }
+
+function titoloCasa(r){
+  const d = r.dati || {};
+  return r.tipo === "offerta"
+    ? `Casa ${locali(d.locali)}${d.mq ? ", " + d.mq + " m²" : ""}`
+    : `Famiglia di ${d.persone || "?"} ${d.persone === 1 ? "persona" : "persone"}`;
+}
+function sottotitoloCasa(r){
+  const d = r.dati || {};
+  const luogo = r.comune + (d.zona ? " — " + d.zona : "");
+  return r.tipo === "offerta"
+    ? `${luogo} · ${STATO_CASA_TXT[d.stato] || "stato n.d."}`
+    : `${luogo} · min ${locali(d.locali_min)} · fino a €${d.budget || "?"} al mese`;
+}
+
+function caricaCasa(){
+  return api("/rest/v1/casa_richieste?select=*&order=creata_il.desc")
+    .then(righe => {
+      erroreCasa = null;
+      CASA = righe || [];
+      aggiornaComuniCasa();
+      if (casaSel && !CASA.some(r => r.id === casaSel)) casaSel = null;
+      renderCasa();
+      controllaNuove("casa", CASA.map(r => ({ id: r.id, stato: r.stato, titolo: titoloCasa(r) + " · " + r.comune })));
+    })
+    .catch(err => {
+      const m = String(err && err.message || err);
+      if (m.indexOf("SESSIONE_SCADUTA") !== -1) throw err;
+      erroreCasa = m;
+      renderCasa();
+    });
+}
+
+function caricaTutto(){ return caricaCasa().then(segnaAggiornamento); }
+
+function aggiornaComuniCasa(){
+  const sel = $("#comuneCasa"), scelta = sel.value;
+  sel.innerHTML = '<option value="">Tutti i comuni</option>' +
+    [...new Set(CASA.map(r => r.comune))].sort().map(c => `<option>${esc(c)}</option>`).join("");
+  sel.value = scelta;
+}
+
+function visibiliCasa(){
+  const q = ($("#qCasa").value || "").trim().toLowerCase();
+  const t = $("#tipoCasa").value, c = $("#comuneCasa").value;
+  return CASA.filter(r => {
+    if (filtroCasa && r.stato !== filtroCasa) return false;
+    if (t && r.tipo !== t) return false;
+    if (c && r.comune !== c) return false;
+    if (q){
+      const d = r.dati || {};
+      const testo = [r.codice, r.comune, d.zona, r.nome, d.note, r.note_comune].join(" ").toLowerCase();
+      if (!testo.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function disegnaKpiCasa(){
+  const c = $("#comuneCasa").value;
+  const base = CASA.filter(r => !c || r.comune === c);
+  const aperta = r => r.stato === "nuova" || r.stato === "in_verifica";
+  $("#kCase").textContent  = base.filter(r => r.tipo === "offerta" && aperta(r) && (r.dati||{}).stato !== "da_ristrutturare").length;
+  $("#kFam").textContent   = base.filter(r => r.tipo === "richiesta" && aperta(r)).length;
+  $("#kAbb").textContent   = base.filter(r => r.tipo === "offerta" && r.stato === "abbinata").length;
+  $("#kRistr").textContent = base.filter(r => r.tipo === "offerta" && aperta(r) && (r.dati||{}).stato === "da_ristrutturare").length;
+  const conta = {};
+  base.forEach(r => { if (r.tipo === "offerta") ((r.dati||{}).freni || []).forEach(f => conta[f] = (conta[f] || 0) + 1); });
+  const top = Object.keys(conta).sort((a, b) => conta[b] - conta[a])[0];
+  $("#kFreno").textContent = top ? FRENI_TXT[top] + ` (${conta[top]})` : "—";
+}
+
+function disegnaFiltriCasa(){
+  const voci = [["", "Tutte", CASA.length]]
+    .concat(Object.keys(STATI_CASA).map(k => [k, STATI_CASA[k].label, CASA.filter(r => r.stato === k).length]));
+  $("#filtriCasa").innerHTML = voci.map(([k, label, n]) => `
+    <button class="stat" data-casa data-stato="${k}" aria-pressed="${filtroCasa === (k || null)}">
+      <span class="lb">${label}</span><span class="n">${n}</span>
+    </button>`).join("");
+}
+
+function disegnaListaCasa(){
+  const el = $("#listaCasa");
+  if (erroreCasa){
+    const manca = /casa_richieste|does not exist|PGRST20|404/i.test(erroreCasa);
+    el.innerHTML = `<div class="empty"><strong>${manca ? "Sezione Casa non ancora attiva" : "Dati non leggibili"}</strong>
+      ${manca ? "Esegui su Supabase lo script supabase-casa.sql (SQL Editor, poi Run) e ricarica la pagina."
+              : esc(erroreCasa)}</div>`;
+    return;
+  }
+  const dati = visibiliCasa();
+  if (!dati.length){
+    el.innerHTML = `<div class="empty"><strong>Nessuna richiesta</strong>
+      ${CASA.length ? "Nessun risultato con questi filtri."
+        : "Non è ancora arrivato nulla. Diffondi il link del modulo con il pulsante a sinistra."}</div>`;
+    return;
+  }
+  el.innerHTML = dati.map(r => {
+    const st = STATI_CASA[r.stato] || STATI_CASA.nuova;
+    const casa = r.tipo === "offerta";
+    const n = compatibili(r).length;
+    return `<button class="card${casaSel === r.id ? " on" : ""}${nonLetta("casa", r.id, r.stato) ? " unread" : ""}" data-casa data-id="${r.id}"
+              style="border-left-color:${st.colore}">
+      <div class="card-top">
+        <span class="code">${esc(r.codice)}</span>
+        <span class="badge" style="color:${st.colore}">${st.label}</span>
+        <span class="when">${quando(r.creata_il)}</span>
+      </div>
+      <h3>${esc(titoloCasa(r))}</h3>
+      <p class="addr">${esc(sottotitoloCasa(r))}</p>
+      <div class="tags">
+        <span class="tag ${casa ? "tipo-casa" : "tipo-fam"}">${casa ? "Casa offerta" : "Cerca casa"}</span>
+        ${n && r.stato !== "abbinata" && r.stato !== "chiusa" ? `<span class="dupe">${n} compatibil${n === 1 ? "e" : "i"}</span>` : ""}
+      </div>
+    </button>`;
+  }).join("");
+}
+
+/* Compatibili: stesso comune, pratica aperta, locali sufficienti,
+   casa non da ristrutturare, arredo se richiesto. Il canone concordato
+   va poi verificato a mano con l'affitto massimo della famiglia. */
+function compatibili(r){
+  return CASA.filter(x => {
+    if (x.tipo === r.tipo || x.comune !== r.comune) return false;
+    if (x.stato === "chiusa" || x.stato === "abbinata") return false;
+    const casa = r.tipo === "offerta" ? (r.dati||{}) : (x.dati||{});
+    const fam  = r.tipo === "offerta" ? (x.dati||{}) : (r.dati||{});
+    if (casa.stato === "da_ristrutturare") return false;
+    if (fam.locali_min && casa.locali && casa.locali < fam.locali_min) return false;
+    if ((fam.esigenze || []).includes("arredata") && casa.arredo === "no") return false;
+    return true;
+  });
+}
+
+function campo(k, v){ return `<div class="field"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
+
+function disegnaDettaglioCasa(){
+  const box = $("#dettaglioCasa");
+  const r = CASA.find(x => x.id === casaSel);
+  if (!r){
+    box.innerHTML = `<div class="placeholder">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#1C2A38" stroke-width="1.5" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+      <p>Scegli una casa o una famiglia dall'elenco per vedere il dettaglio e gli abbinamenti possibili.</p>
+    </div>`;
+    return;
+  }
+  const d = r.dati || {}, st = STATI_CASA[r.stato] || STATI_CASA.nuova, casa = r.tipo === "offerta";
+  const righe = casa ? [
+      campo("Locali e superficie", esc(locali(d.locali)) + (d.mq ? " · " + d.mq + " m²" : "")),
+      campo("Stato della casa", esc(STATO_CASA_TXT[d.stato] || "—")),
+      campo("Arredata", esc({ si: "Sì", parziale: "In parte", no: "No" }[d.arredo] || "—")),
+      campo("Cosa ha frenato il proprietario", esc((d.freni || []).map(f => FRENI_TXT[f]).join(", ") || "—"))
+    ] : [
+      campo("Persone nel nucleo", esc(d.persone || "—")),
+      campo("Locali minimi", esc(locali(d.locali_min))),
+      campo("Affitto massimo", "€" + esc(d.budget || "—") + " al mese"),
+      campo("Esigenze", esc((d.esigenze || []).map(e => ESIG_TXT[e]).join(", ") || "—")),
+      campo("In graduatoria case popolari", esc({ si: "Sì", no: "No", non_so: "Non sa" }[d.graduatoria] || "—"))
+    ];
+  const comp = compatibili(r);
+  const aperta = r.stato !== "abbinata" && r.stato !== "chiusa";
+
+  box.innerHTML = `<div class="detail">
+    <div class="detail-head">
+      <span class="code">${esc(r.codice)} · ${casa ? "Casa offerta" : "Famiglia che cerca casa"}</span>
+      <h2>${esc(titoloCasa(r))}</h2>
+      <span class="badge" style="color:${st.colore}">${st.label}</span>
+      <span class="when" style="margin-left:8px">${dataEstesa(r.creata_il)}</span>
+    </div>
+    ${campo("Comune e zona", esc(r.comune) + (d.zona ? " — " + esc(d.zona) : ""))}
+    ${righe.join("")}
+    ${d.note ? `<div class="field"><div class="k">Note del cittadino</div><div class="quote">${esc(d.note)}</div></div>` : ""}
+    ${campo("Contatto", esc(r.nome) + `<br><span class="mono" style="color:var(--muted)">${esc(r.contatto)}</span>`)}
+
+    <div class="field">
+      <div class="k">${casa ? "Famiglie compatibili" : "Case compatibili"} (${aperta ? comp.length : 0})</div>
+      ${!aperta ? '<div class="vuota">Pratica già ' + st.label.toLowerCase() + '.</div>'
+        : comp.length ? `<div class="simili-lista">${comp.map(x => `
+          <div class="match-row">
+            <button class="simile" data-casa data-id="${x.id}">
+              <span class="cod">${esc(x.codice)}</span> · ${esc(titoloCasa(x))}
+              <span class="qta">${esc(sottotitoloCasa(x))}</span>
+            </button>
+            <button class="abbina" data-casa data-con="${x.id}" title="Segna le due pratiche come abbinate">Abbina</button>
+          </div>`).join("")}</div>
+          <p class="side-note" style="margin-top:8px">Prima di abbinare, verifica che il canone concordato stia nell'affitto massimo della famiglia.</p>`
+        : '<div class="vuota">Nessuna corrispondenza nello stesso comune per ora.</div>'}
+    </div>
+
+    <div class="field">
+      <div class="k">Nota interna</div>
+      <textarea class="note" id="notaCasa" placeholder="Sopralluogo, documenti, esito del colloquio…">${esc(r.note_comune || "")}</textarea>
+      <button class="ghost" id="btnNotaCasa" data-casa style="margin-top:8px">Salva nota</button>
+    </div>
+
+    <div class="actions">
+      <button class="act primary" data-casa data-azione="in_verifica" ${r.stato !== "nuova" ? "disabled" : ""}>Metti in verifica</button>
+      <button class="act ok" data-casa data-azione="abbinata" ${!aperta ? "disabled" : ""}>Segna abbinata</button>
+      <button class="act no wide" data-casa data-azione="chiusa" ${r.stato === "chiusa" ? "disabled" : ""}>Chiudi pratica</button>
+    </div>
+    <div class="err-azione" id="errCasa" hidden></div>
+  </div>`;
+}
+
+/* Radar della sezione Casa: le pratiche non hanno coordinate GPS,
+   quindi la posizione è simbolica. Ogni comune ha il suo spicchio
+   (così case e famiglie dello stesso comune stanno vicine), le case
+   offerte sull'anello esterno, le famiglie su quello interno.
+   Casa piena = casa offerta, casa vuota = famiglia che cerca casa;
+   il colore segue lo stato della pratica. */
+function hash(t){ let h = 2166136261; for (const c of String(t)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; }
+
+function disegnaCasePin(){
+  const g = $("#casePin"); if (!g) return;
+  const comuni = [...new Set(CASA.map(r => r.comune))].sort();
+  const spicchio = (2 * Math.PI) / Math.max(comuni.length, 1);
+  const vis = visibiliCasa();
+  // dentro ogni comune, case e famiglie si distribuiscono a ventaglio senza sovrapporsi
+  const gruppi = {};
+  vis.forEach(r => (gruppi[r.comune + "|" + r.tipo] = gruppi[r.comune + "|" + r.tipo] || []).push(r));
+  Object.values(gruppi).forEach(l => l.sort((a, b) => String(a.creata_il).localeCompare(String(b.creata_il))));
+  g.innerHTML = vis.map(r => {
+    const i = comuni.indexOf(r.comune);
+    const l = gruppi[r.comune + "|" + r.tipo], j = l.indexOf(r), n = l.length;
+    const ampiezza = comuni.length > 1 ? spicchio * 0.8 : 2 * Math.PI;
+    const ang = i * spicchio + ((j + 0.5) / n - 0.5) * ampiezza + (hash(r.comune) - 0.5) * 0.2 - Math.PI / 2;
+    const raggio = r.tipo === "offerta" ? 100 + (j % 2) * 24 : 42 + (j % 2) * 24;
+    const x = 150 + Math.cos(ang) * raggio, y = 150 + Math.sin(ang) * raggio;
+    const col = (STATI_CASA[r.stato] || STATI_CASA.nuova).colore;
+    const piena = r.tipo === "offerta";
+    const on = casaSel === r.id ? " on" : "";
+    return `<g class="casapin${on}" data-casa data-id="${r.id}" role="button" tabindex="0"
+              aria-label="${esc(r.codice)} — ${esc(titoloCasa(r))}, ${esc(r.comune)}"
+              transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
+      <circle class="alone" r="11" fill="${col}" opacity=".12"/>
+      <path d="M-6 -1 L0 -7 L6 -1 V6 H-6 Z" fill="${piena ? col : "#0B131C"}" stroke="${col}" stroke-width="${piena ? 0 : 1.6}" stroke-linejoin="round"/>
+    </g>`;
+  }).join("");
+}
+
+function renderCasa(){
+  disegnaKpiCasa();
+  disegnaCasePin();
+  disegnaFiltriCasa();
+  disegnaListaCasa();
+  disegnaDettaglioCasa();
+  aggiornaBadge();
+}
+
+function apriCasa(id){
+  segnaLetto("casa", id);
+  casaSel = id;
+  renderCasa();
+  if (window.innerWidth <= 980) $("#pannelloCasa").classList.add("open");
+}
+
+function aggiornaCasa(id, campi){
+  return api("/rest/v1/casa_richieste?id=eq." + id, {
+    method: "PATCH", headers: { "Prefer": "return=minimal" }, body: JSON.stringify(campi)
+  });
+}
+function erroreAzioneCasa(msg){ const e = $("#errCasa"); if (e){ e.textContent = msg; e.hidden = false; } }
+
+function abbina(idA, idB){
+  const a = CASA.find(x => x.id === idA), b = CASA.find(x => x.id === idB);
+  if (!a || !b) return;
+  const data = new Date().toLocaleDateString("it-IT");
+  const nota = (r, altro) => ((r.note_comune ? r.note_comune + "\n" : "") + `Abbinata con ${altro.codice} il ${data}`);
+  Promise.all([
+    aggiornaCasa(a.id, { stato: "abbinata", note_comune: nota(a, b) }),
+    aggiornaCasa(b.id, { stato: "abbinata", note_comune: nota(b, a) })
+  ]).then(caricaCasa).then(() => mostraToast("Abbinamento registrato", `${a.codice} con ${b.codice}`, null))
+    .catch(err => erroreAzioneCasa("Abbinamento non salvato: " + err.message));
+}
+
+document.addEventListener("click", e => {
+  if (e.target.closest("#btnAvvisi")){ attivaAvvisi(); return; }
+  const toast = e.target.closest(".toast");
+  if (toast){ if (toast.dataset.id) apriCasa(toast.dataset.id); toast.remove(); return; }
+
+  if (!e.target.closest("[data-casa]") && !e.target.closest("#btnChiudiCasa") && !e.target.closest("#btnLinkCasa")) return;
+  const pin = e.target.closest(".casapin");
+  if (pin){ apriCasa(pin.dataset.id); return; }
+  const stat = e.target.closest(".stat[data-casa]");
+  if (stat){ filtroCasa = stat.dataset.stato || null; renderCasa(); return; }
+  const ab = e.target.closest(".abbina[data-casa]");
+  if (ab){ abbina(casaSel, ab.dataset.con); return; }
+  const card = e.target.closest(".card[data-casa], .simile[data-casa]");
+  if (card){ apriCasa(card.dataset.id); return; }
+  const act = e.target.closest(".act[data-casa]");
+  if (act && !act.disabled){
+    aggiornaCasa(casaSel, { stato: act.dataset.azione }).then(caricaCasa)
+      .catch(err => erroreAzioneCasa("Stato non aggiornato: " + err.message));
+    return;
+  }
+  if (e.target.closest("#btnNotaCasa")){
+    const btn = $("#btnNotaCasa"), testo = $("#notaCasa").value;
+    btn.disabled = true; btn.textContent = "Salvataggio…";
+    aggiornaCasa(casaSel, { note_comune: testo })
+      .then(() => { const r = CASA.find(x => x.id === casaSel); if (r) r.note_comune = testo;
+                    btn.textContent = "Nota salvata"; setTimeout(() => { btn.textContent = "Salva nota"; btn.disabled = false; }, 1800); })
+      .catch(err => { btn.disabled = false; btn.textContent = "Salva nota"; erroreAzioneCasa("Nota non salvata: " + err.message); });
+    return;
+  }
+  if (e.target.closest("#btnChiudiCasa")){ $("#pannelloCasa").classList.remove("open"); return; }
+  if (e.target.closest("#btnLinkCasa")){
+    const link = new URL("casa.html", location.href).href, b = $("#btnLinkCasa");
+    (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject())
+      .then(() => { b.textContent = "Link copiato"; }, () => { b.textContent = link; })
+      .finally(() => setTimeout(() => b.textContent = "Copia link del modulo", 2500));
+  }
+});
+
+$("#qCasa").addEventListener("input", () => { disegnaListaCasa(); disegnaCasePin(); });
+$("#tipoCasa").addEventListener("change", () => { disegnaListaCasa(); disegnaCasePin(); });
+$("#comuneCasa").addEventListener("change", () => { disegnaKpiCasa(); disegnaListaCasa(); disegnaCasePin(); });
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const pin = e.target.closest && e.target.closest(".casapin");
+  if (pin){ e.preventDefault(); apriCasa(pin.dataset.id); }
+});
+
+
+/* =========================================================
+   AVVISI — pallino sulle pratiche non lette, contatore sulle
+   sezioni, suono e notifica del browser quando arriva qualcosa.
+   "Non letta" = pratica nuova che nessuno ha ancora aperto da
+   questo browser. Le prime pratiche trovate al primo avvio
+   vengono considerate già lette.
+   ========================================================= */
+
+const CHIAVE_LETTI = "radarcasa_letti_v1", CHIAVE_AVVISI = "radarcasa_avvisi_v1";
+const TITOLO_BASE = document.title;
+const conosciuti = { seg: null, casa: null };
+let letti = { seg: null, casa: null };
+let elenchi = { seg: [], casa: [] };
+let avvisiAttivi = false;
+let audioCtx = null;
+
+try { const v = JSON.parse(localStorage.getItem(CHIAVE_LETTI) || "{}");
+      letti.seg = v.seg ? new Set(v.seg) : null; letti.casa = v.casa ? new Set(v.casa) : null; } catch(e){}
+try { avvisiAttivi = localStorage.getItem(CHIAVE_AVVISI) === "1"; } catch(e){}
+
+function salvaLetti(){
+  try { localStorage.setItem(CHIAVE_LETTI, JSON.stringify({
+    seg: letti.seg ? [...letti.seg].slice(-2000) : null,
+    casa: letti.casa ? [...letti.casa].slice(-2000) : null })); } catch(e){}
+}
+function nonLetta(sez, id, stato){ return stato === "nuova" && letti[sez] && !letti[sez].has(id); }
+function segnaLetto(sez, id){
+  if (!letti[sez]) letti[sez] = new Set();
+  if (!letti[sez].has(id)){ letti[sez].add(id); salvaLetti(); aggiornaBadge(); }
+}
+
+function controllaNuove(sez, lista){
+  elenchi[sez] = lista;
+  if (!letti[sez]){ letti[sez] = new Set(lista.map(x => x.id)); salvaLetti(); }  // primo avvio
+  if (conosciuti[sez]){
+    const nuove = lista.filter(x => !conosciuti[sez].has(x.id) && x.stato === "nuova");
+    if (nuove.length) avvisa(sez, nuove);
+  }
+  conosciuti[sez] = new Set(lista.map(x => x.id));
+  aggiornaBadge(true);
+}
+
+function contaNonLette(sez){ return elenchi[sez].filter(x => nonLetta(sez, x.id, x.stato)).length; }
+
+let ultimoConteggio = { seg: 0, casa: 0 };
+function aggiornaBadge(animato){
+  const n = { seg: contaNonLette("seg"), casa: contaNonLette("casa") };
+  [["seg", "#notifSeg"], ["casa", "#notifCasa"]].forEach(([k, sel]) => {
+    const b = $(sel); if (!b) return;
+    b.hidden = !n[k]; b.textContent = n[k] > 99 ? "99+" : n[k];
+    if (animato && n[k] > ultimoConteggio[k]){ b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); }
+  });
+  ultimoConteggio = n;
+  const tot = n.seg + n.casa, bt = $("#notifTot");
+  if (bt){ bt.hidden = !tot; bt.textContent = tot > 99 ? "99+" : tot; }
+  document.title = (tot ? `(${tot}) ` : "") + TITOLO_BASE;
+}
+
+function avvisa(sez, nuove){
+  const casa = sez === "casa";
+  const titolo = nuove.length === 1
+    ? (casa ? "Nuova richiesta casa" : "Nuova segnalazione")
+    : `${nuove.length} ${casa ? "nuove richieste casa" : "nuove segnalazioni"}`;
+  const testo = nuove.length === 1 ? nuove[0].titolo : nuove.slice(0, 3).map(x => x.titolo).join(" · ");
+  mostraToast(titolo, testo, nuove.length === 1 ? { vista: sez, id: nuove[0].id } : { vista: sez });
+  if (!avvisiAttivi) return;
+  suona();
+  if ("Notification" in window && Notification.permission === "granted" && document.hidden){
+    try {
+      const n = new Notification("RADAR — " + titolo, { body: testo, icon: "icon-192.png", tag: "radar-" + sez });
+      n.onclick = () => { window.focus(); if (nuove.length === 1) apriCasa(nuove[0].id); n.close(); };
+    } catch(e){}
+  }
+}
+
+function mostraToast(titolo, testo, dove){
+  const box = $("#toasts"); if (!box) return;
+  const t = document.createElement("button");
+  t.className = "toast";
+  if (dove){ t.dataset.vista = dove.vista; if (dove.id) t.dataset.id = dove.id; }
+  t.innerHTML = `<div class="k">${esc(titolo)}</div><div class="t">${esc(testo)}</div>`;
+  box.appendChild(t);
+  setTimeout(() => t.remove(), 9000);
+}
+
+function suona(){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    [0, 0.16].forEach((ritardo, i) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + ritardo;
+      o.type = "sine"; o.frequency.value = i ? 1320 : 880;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + 0.3);
+    });
+  } catch(e){}
+}
+
+function disegnaCampana(){
+  const b = $("#btnAvvisi");
+  b.setAttribute("aria-pressed", String(avvisiAttivi));
+  b.title = avvisiAttivi ? "Avvisi attivi: suono e notifiche. Clicca per disattivarli"
+                         : "Avvisi spenti. Clicca per attivare suono e notifiche";
+}
+function attivaAvvisi(){
+  avvisiAttivi = !avvisiAttivi;
+  try { localStorage.setItem(CHIAVE_AVVISI, avvisiAttivi ? "1" : "0"); } catch(e){}
+  disegnaCampana();
+  if (avvisiAttivi){
+    suona();   // prova del suono: sblocca anche l'audio nel browser
+    if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+    mostraToast("Avvisi attivi", "Sentirai un suono e, a finestra chiusa o in secondo piano, riceverai una notifica.", null);
+  } else {
+    mostraToast("Avvisi spenti", "Resteranno solo i contatori sulle sezioni.", null);
+  }
+}
+disegnaCampana();
+renderCasa();
+
+
+/* ---------- Avvio, login e uscita ---------- */
+const RICARICA_MS = 30000;
+let timerRicarica = null;
+function segnaAggiornamento(){
+  const el = $("#ultimoAgg");
+  if (el) el.textContent = "aggiornato " + new Date().toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
+}
+function gestisciErrore(err){
+  if (String(err && err.message || err).indexOf("SESSIONE_SCADUTA") !== -1){ scartaSessione(); mostraLogin("Sessione scaduta, rifai l'accesso."); }
+}
+function entra(){
+  $("#login").hidden = true;
+  $("#ruoloOperatore").innerHTML = esc(sess.email) + ' · <button class="esci" id="btnEsci">esci</button> <span class="mono" id="ultimoAgg" style="color:var(--muted)"></span>';
+  caricaTutto().catch(gestisciErrore);
+  clearInterval(timerRicarica);
+  timerRicarica = setInterval(() => caricaTutto().catch(gestisciErrore), RICARICA_MS);
+}
+function mostraLogin(msg){
+  clearInterval(timerRicarica);
+  $("#login").hidden = false;
+  const e = $("#lgErr");
+  if (msg){ e.textContent = msg; e.hidden = false; } else { e.hidden = true; }
+}
+function esci(){
+  scartaSessione();
+  CASA = []; casaSel = null; conosciuti.casa = null;
+  renderCasa();
+  mostraLogin(null);
+}
+document.addEventListener("click", e => { if (e.target.closest("#btnEsci")) esci(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("#pannelloCasa").classList.remove("open"); });
+$("#loginForm").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const btn = $("#lgBtn");
+  btn.disabled = true; btn.textContent = "Accesso in corso…";
+  $("#lgErr").hidden = true;
+  login($("#lgEmail").value.trim(), $("#lgPw").value)
+    .then(() => { $("#lgPw").value = ""; entra(); })
+    .catch(err => mostraLogin(err.message))
+    .finally(() => { btn.disabled = false; btn.textContent = "Entra"; });
+});
+if (SUPABASE_URL.indexOf("TUO-PROGETTO") !== -1) mostraLogin("Configurazione mancante: compila config.js.");
+else if (leggiSessione()) entra();
+else mostraLogin(null);
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+
+</script>
+</body>
+</html>

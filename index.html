@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RADAR CASA — Case sfitte e famiglie che cercano casa</title>
+<meta name="description" content="Metti a disposizione una casa sfitta o segnala al Comune che cerchi casa."/>
+<meta name="theme-color" content="#0F0F0F">
+<link rel="manifest" href="manifest-app.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RADAR CASA">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --neon:#00E5FF;--neon-l:rgba(0,229,255,0.1);
+  --rosso:#FF4C4C;--rosso-l:rgba(255,76,76,0.12);
+  --verde:#39D98A;--verde-l:rgba(57,217,138,0.12);
+  --text:#F0F0F0;--muted:#A0A0A0;--hint:#707070;
+  --border:#2A2A2A;--border-strong:#3A3A3A;
+  --bg:#0F0F0F;--card:#1A1A1A;--header:#141414;--radius:10px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+.top{background:var(--header);border-bottom:1px solid var(--border);padding:12px 18px 10px;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo svg{width:28px;height:28px;}
+.logo b{font-size:18px;font-weight:700;letter-spacing:2px;}
+.logo b span{color:var(--neon);}
+.top-sub{color:var(--muted);font-size:11px;margin-top:4px;margin-left:36px;}
+.container{max-width:480px;width:100%;margin:0 auto;padding:20px 16px 48px;flex:1;}
+.step-bar{display:flex;align-items:center;gap:6px;margin-bottom:22px;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border-strong);transition:all .2s;}
+.dot.done{background:var(--neon);}
+.dot.active{background:var(--neon);width:22px;border-radius:4px;box-shadow:0 0 8px var(--neon);}
+.step-lbl{font-size:12px;color:var(--hint);margin-left:auto;}
+.stitle{font-size:20px;font-weight:600;margin-bottom:10px;}
+.intro{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:18px;}
+.scelta{display:flex;flex-direction:column;gap:12px;margin-bottom:8px;}
+.scelta button{text-align:left;border:1.5px solid var(--border-strong);border-radius:var(--radius);background:var(--card);color:var(--text);padding:16px;cursor:pointer;font:inherit;}
+.scelta button strong{display:block;font-size:16px;margin-bottom:4px;}
+.scelta button small{display:block;font-size:13px;color:var(--muted);line-height:1.45;}
+.scelta button:hover,.scelta button:focus-visible{border-color:var(--neon);outline:none;background:var(--neon-l);}
+.fg{margin-bottom:14px;}
+.fg label,.fg .lbl{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.fg input,.fg select,.fg textarea{width:100%;padding:12px 14px;border:1px solid var(--border-strong);border-radius:8px;font-size:16px;color:var(--text);background:var(--card);font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--neon);box-shadow:0 0 0 2px var(--neon-l);}
+.fg textarea{min-height:80px;resize:none;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.opt{font-size:11px;color:var(--hint);margin-left:4px;font-weight:400;}
+.pills{display:flex;flex-wrap:wrap;gap:8px;}
+.pill{border:1.5px solid var(--border-strong);border-radius:20px;padding:8px 13px;font-size:13px;color:var(--text);background:var(--card);cursor:pointer;font-family:inherit;}
+.pill.sel{border-color:var(--neon);background:var(--neon-l);color:var(--neon);}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);line-height:1.5;margin:6px 0 14px;}
+.check input{width:18px;height:18px;margin-top:2px;accent-color:#00E5FF;flex:none;}
+.nota{font-size:12px;color:var(--hint);line-height:1.55;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:14px;}
+.err{display:none;font-size:13px;color:var(--rosso);background:var(--rosso-l);border:1px solid rgba(255,76,76,.3);border-radius:8px;padding:10px 12px;margin-bottom:12px;}
+.btns{display:flex;gap:10px;margin-top:18px;}
+.btn{flex:1;padding:14px;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;border:none;font-family:inherit;}
+.btn-p{background:var(--neon);color:#04161A;}
+.btn-p:disabled{opacity:.6;cursor:default;}
+.btn-s{background:transparent;color:var(--muted);border:1px solid var(--border-strong);flex:0 0 96px;}
+.btn:focus-visible{outline:2px solid var(--text);outline-offset:2px;}
+.ok{text-align:center;padding-top:20px;}
+.ok .cerchio{width:64px;height:64px;border-radius:50%;background:var(--verde-l);border:1.5px solid var(--verde);color:var(--verde);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px;}
+.codice{display:inline-block;font-size:20px;font-weight:700;letter-spacing:1px;color:var(--neon);background:var(--neon-l);border:1px solid rgba(0,229,255,.3);border-radius:8px;padding:10px 16px;margin:14px 0;}
+.hidden{display:none!important;}
+.scelta button.calc{border-style:dashed}
+.esito{background:var(--card);border:1px solid var(--border-strong);border-radius:var(--radius);padding:16px;margin:6px 0 14px}
+.esito .riga{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:6px 0;color:var(--muted)}
+.esito .riga b{color:var(--text);font-weight:600;white-space:nowrap}
+.esito .tot{border-top:1px solid var(--border-strong);margin-top:6px;padding-top:12px;font-size:15px;color:var(--text)}
+.esito .tot b{color:var(--verde);font-size:20px}
+.esito .neg b{color:var(--rosso)}
+.sub-t{font-size:12px;color:var(--hint);margin-top:2px}
+.footer{text-align:center;font-size:12px;color:var(--hint);padding:18px;border-top:1px solid var(--border);}
+.footer a{color:var(--muted);}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="#00E5FF" stroke-opacity=".35" stroke-width="1.5"/><circle cx="16" cy="16" r="9.5" fill="none" stroke="#00E5FF" stroke-opacity=".6" stroke-width="1.5"/><path d="M11 17 L16 12.2 L21 17 V21.5 H11 Z" fill="#00E5FF"/></svg>
+    <b>RADAR <span>CASA</span></b>
+  </div>
+  <div class="top-sub">Case sfitte e famiglie che cercano casa</div>
+</header>
+
+<main class="container">
+  <div class="step-bar" id="sbar">
+    <div class="dot active" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+    <span class="step-lbl" id="slbl">Passo 1 di 3</span>
+  </div>
+
+  <!-- PASSO 1: chi sei -->
+  <section id="p1">
+    <h1 class="stitle">Cosa vuoi fare?</h1>
+    <p class="intro">Il Comune mette in contatto chi ha una casa vuota con famiglie verificate, con contratto a canone concordato e pratiche seguite dal servizio.</p>
+    <div class="scelta">
+      <button type="button" onclick="scegli('offerta')">
+        <strong>Ho una casa sfitta</strong>
+        <small>Voglio capire se posso affittarla in modo sicuro, con garanzie e agevolazioni.</small>
+      </button>
+      <button type="button" onclick="scegli('richiesta')">
+        <strong>Cerco casa</strong>
+        <small>Cerco un alloggio a un affitto sostenibile per me o la mia famiglia.</small>
+      </button>
+      <button type="button" class="calc" onclick="apriCalcolo()">
+        <strong>Quanto mi costa tenerla vuota?</strong>
+        <small>Confronta in un minuto la casa sfitta con l'affitto a canone concordato.</small>
+      </button>
+    </div>
+  </section>
+
+
+  <!-- CALCOLATORE PER IL PROPRIETARIO -->
+  <section id="pc" class="hidden">
+    <h1 class="stitle">Vuota o affittata?</h1>
+    <p class="intro">Una stima veloce. I valori esatti li calcola l'operatore con l'accordo territoriale del tuo comune.</p>
+    <div class="row2">
+      <div class="fg"><label for="c-mq">Metri quadri</label><input id="c-mq" type="number" inputmode="numeric" min="10" max="1000" oninput="suggerisciCanone();calcola()"></div>
+      <div class="fg"><label for="c-canone">Affitto al mese (€)</label><input id="c-canone" type="number" inputmode="numeric" min="0" oninput="canoneToccato=true;calcola()"></div>
+    </div>
+    <p class="sub-t" id="c-nota-canone" style="margin:-8px 0 12px"></p>
+    <div class="row2">
+      <div class="fg"><label for="c-imu">IMU all'anno (€)</label><input id="c-imu" type="number" inputmode="numeric" min="0" oninput="calcola()"></div>
+      <div class="fg"><label for="c-cond">Condominio all'anno (€)</label><input id="c-cond" type="number" inputmode="numeric" min="0" oninput="calcola()"></div>
+    </div>
+    <div class="fg"><label for="c-altre">Altre spese all'anno per tenerla vuota (€) <span class="opt">utenze, piccole manutenzioni</span></label><input id="c-altre" type="number" inputmode="numeric" min="0" oninput="calcola()"></div>
+    <div class="fg"><span class="lbl">Il tuo comune è ad alta tensione abitativa?</span>
+      <div class="pills" data-gruppo="tensione" data-singolo="1">
+        <button type="button" class="pill" data-v="si">Sì</button>
+        <button type="button" class="pill" data-v="no">No</button>
+        <button type="button" class="pill sel" data-v="non_so" aria-pressed="true">Non so</button>
+      </div></div>
+    <div class="esito" id="c-esito" aria-live="polite"></div>
+    <p class="nota">Stima indicativa, non è una consulenza fiscale. Ipotesi usate: cedolare secca al 10% nei comuni ad alta tensione abitativa e al 21% negli altri o se non lo sai; IMU ridotta del 25% per i contratti a canone concordato; spese condominiali ordinarie e utenze a carico dell'inquilino.</p>
+    <div class="btns"><button class="btn btn-s" type="button" onclick="esciCalcolo()">Indietro</button><button class="btn btn-p" type="button" onclick="daCalcoloAOfferta()">Metto a disposizione la casa</button></div>
+  </section>
+
+  <!-- PASSO 2A: la casa -->
+  <section id="p2o" class="hidden">
+    <h1 class="stitle">La tua casa</h1>
+    <p class="intro">Bastano pochi dati. Un operatore ti ricontatta per un sopralluogo e per mostrarti canone e agevolazioni.</p>
+    <div class="fg"><label for="o-comune">Comune</label><input id="o-comune" autocomplete="address-level2"></div>
+    <div class="fg"><label for="o-zona">Via o zona <span class="opt">facoltativo</span></label><input id="o-zona"></div>
+    <div class="row2">
+      <div class="fg"><label for="o-locali">Locali</label>
+        <select id="o-locali"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option value="5">5 o più</option></select></div>
+      <div class="fg"><label for="o-mq">Metri quadri</label><input id="o-mq" type="number" inputmode="numeric" min="10" max="1000"></div>
+    </div>
+    <div class="fg"><span class="lbl">In che stato è?</span>
+      <div class="pills" data-gruppo="stato" data-singolo="1">
+        <button type="button" class="pill" data-v="pronta">Pronta da abitare</button>
+        <button type="button" class="pill" data-v="piccoli_lavori">Servono piccoli lavori</button>
+        <button type="button" class="pill" data-v="da_ristrutturare">Da ristrutturare</button>
+      </div></div>
+    <div class="fg"><span class="lbl">Arredata?</span>
+      <div class="pills" data-gruppo="arredo" data-singolo="1">
+        <button type="button" class="pill" data-v="si">Sì</button>
+        <button type="button" class="pill" data-v="parziale">In parte</button>
+        <button type="button" class="pill" data-v="no">No</button>
+      </div></div>
+    <div class="fg"><span class="lbl">Cosa ti ha frenato finora? <span class="opt">anche più di una</span></span>
+      <div class="pills" data-gruppo="freni">
+        <button type="button" class="pill" data-v="morosita">Paura di non essere pagato</button>
+        <button type="button" class="pill" data-v="sfratto">Tempi per riaverla</button>
+        <button type="button" class="pill" data-v="danni">Paura di danni</button>
+        <button type="button" class="pill" data-v="pratiche">Pratiche e contratti</button>
+        <button type="button" class="pill" data-v="disposizione">Voglio tenerla a disposizione</button>
+        <button type="button" class="pill" data-v="agevolazioni">Non conosco le agevolazioni</button>
+      </div></div>
+    <div class="err" id="err2o"></div>
+    <div class="btns"><button class="btn btn-s" type="button" onclick="vai(1)">Indietro</button><button class="btn btn-p" type="button" onclick="avanti2()">Continua</button></div>
+  </section>
+
+  <!-- PASSO 2B: la famiglia -->
+  <section id="p2r" class="hidden">
+    <h1 class="stitle">Cosa cerchi</h1>
+    <p class="intro">Queste informazioni servono per proporti alloggi adatti. I documenti verranno chiesti solo al colloquio.</p>
+    <div class="fg"><label for="r-comune">Comune dove cerchi</label><input id="r-comune" autocomplete="address-level2"></div>
+    <div class="row2">
+      <div class="fg"><label for="r-persone">Persone nel nucleo</label><input id="r-persone" type="number" inputmode="numeric" min="1" max="15"></div>
+      <div class="fg"><label for="r-locali">Locali minimi</label>
+        <select id="r-locali"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option value="5">5 o più</option></select></div>
+    </div>
+    <div class="fg"><label for="r-budget">Affitto massimo che puoi pagare al mese (€)</label><input id="r-budget" type="number" inputmode="numeric" min="50" max="5000"></div>
+    <div class="fg"><span class="lbl">Ti serve <span class="opt">facoltativo</span></span>
+      <div class="pills" data-gruppo="esigenze">
+        <button type="button" class="pill" data-v="senza_barriere">Casa senza barriere</button>
+        <button type="button" class="pill" data-v="animali">Posso tenere animali</button>
+        <button type="button" class="pill" data-v="arredata">Casa arredata</button>
+      </div></div>
+    <div class="fg"><span class="lbl">Sei in graduatoria per le case popolari?</span>
+      <div class="pills" data-gruppo="graduatoria" data-singolo="1">
+        <button type="button" class="pill" data-v="si">Sì</button>
+        <button type="button" class="pill" data-v="no">No</button>
+        <button type="button" class="pill" data-v="non_so">Non so</button>
+      </div></div>
+    <div class="err" id="err2r"></div>
+    <div class="btns"><button class="btn btn-s" type="button" onclick="vai(1)">Indietro</button><button class="btn btn-p" type="button" onclick="avanti2()">Continua</button></div>
+  </section>
+
+  <!-- PASSO 3: contatti -->
+  <section id="p3" class="hidden">
+    <h1 class="stitle">Come ti ricontattiamo</h1>
+    <div class="fg"><label for="nome">Nome e cognome</label><input id="nome" autocomplete="name"></div>
+    <div class="fg"><label for="contatto">Telefono o email</label><input id="contatto" autocomplete="tel"></div>
+    <div class="fg"><label for="note">Vuoi aggiungere qualcosa? <span class="opt">facoltativo</span></label><textarea id="note" maxlength="600"></textarea></div>
+    <label class="check"><input type="checkbox" id="privacy"> Acconsento al trattamento dei miei dati da parte del Comune solo per questo servizio.</label>
+    <p class="nota">Inviare il modulo non è un impegno: serve a essere ricontattati da un operatore.</p>
+    <div class="err" id="err3"></div>
+    <div class="btns"><button class="btn btn-s" type="button" onclick="indietro3()">Indietro</button><button class="btn btn-p" type="button" id="btn-invia" onclick="invia()">Invia al Comune</button></div>
+  </section>
+
+  <!-- ESITO -->
+  <section id="p4" class="hidden ok">
+    <div class="cerchio" aria-hidden="true">✓</div>
+    <h1 class="stitle">Inviato al Comune</h1>
+    <p class="intro" id="esito-testo"></p>
+    <div class="codice" id="codice"></div>
+    <p class="intro">Conserva questo codice: ti servirà quando verrai ricontattato.</p>
+  </section>
+</main>
+
+<footer class="footer">RADAR CASA — Case sfitte e famiglie che cercano casa · <a href="#">Privacy</a></footer>
+
+<script src="config.js"></script>
+<script>
+var tipo = null;
+var scelte = { stato:[], arredo:[], freni:[], esigenze:[], graduatoria:[], tensione:['non_so'] };
+
+function mostra(id){
+  ['p1','pc','p2o','p2r','p3','p4'].forEach(function(s){ document.getElementById(s).classList.add('hidden'); });
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+function barra(n){
+  for (var i=1;i<=3;i++){
+    var d=document.getElementById('d'+i);
+    d.className='dot'+(i<n?' done':'')+(i===n?' active':'');
+  }
+  document.getElementById('slbl').textContent='Passo '+n+' di 3';
+}
+function vai(n){ barra(n); mostra(n===1?'p1':(tipo==='offerta'?'p2o':'p2r')); }
+function scegli(t){ tipo=t; barra(2); mostra(t==='offerta'?'p2o':'p2r'); }
+function indietro3(){ vai(2); }
+
+document.querySelectorAll('.pills').forEach(function(g){
+  var nome=g.dataset.gruppo, singolo=!!g.dataset.singolo;
+  g.querySelectorAll('.pill').forEach(function(p){
+    p.setAttribute('aria-pressed','false');
+    p.addEventListener('click',function(){
+      if (singolo){
+        g.querySelectorAll('.pill').forEach(function(x){ x.classList.remove('sel'); x.setAttribute('aria-pressed','false'); });
+        p.classList.add('sel'); p.setAttribute('aria-pressed','true'); scelte[nome]=[p.dataset.v];
+      } else {
+        p.classList.toggle('sel');
+        var on=p.classList.contains('sel'); p.setAttribute('aria-pressed',String(on));
+        scelte[nome]=Array.prototype.map.call(g.querySelectorAll('.pill.sel'),function(x){return x.dataset.v;});
+      }
+    });
+  });
+});
+
+function val(id){ return document.getElementById(id).value.trim(); }
+function errore(id,msg){ var e=document.getElementById(id); e.textContent=msg; e.style.display=msg?'block':'none'; }
+
+function datiRaccolti(){
+  if (tipo==='offerta') return {
+    zona: val('o-zona'), locali: +val('o-locali')||null, mq: +val('o-mq')||null,
+    stato: scelte.stato[0]||null, arredo: scelte.arredo[0]||null, freni: scelte.freni
+  };
+  return {
+    persone: +val('r-persone')||null, locali_min: +val('r-locali')||null, budget: +val('r-budget')||null,
+    esigenze: scelte.esigenze, graduatoria: scelte.graduatoria[0]||null
+  };
+}
+
+function avanti2(){
+  if (tipo==='offerta'){
+    if (!val('o-comune')) return errore('err2o','Indica il Comune in cui si trova la casa.');
+    if (!val('o-locali')) return errore('err2o','Indica quanti locali ha la casa.');
+    if (!scelte.stato.length) return errore('err2o','Indica in che stato è la casa.');
+    errore('err2o','');
+  } else {
+    if (!val('r-comune')) return errore('err2r','Indica il Comune dove cerchi casa.');
+    if (!(+val('r-persone')>0)) return errore('err2r','Indica quante persone vivranno nella casa.');
+    if (!(+val('r-budget')>0)) return errore('err2r','Indica l\'affitto massimo che puoi pagare.');
+    errore('err2r','');
+  }
+  barra(3); mostra('p3');
+}
+
+function invia(){
+  var nome=val('nome'), contatto=val('contatto');
+  if (nome.length<2) return errore('err3','Scrivi nome e cognome.');
+  if (!/@/.test(contatto) && contatto.replace(/\D/g,'').length<6) return errore('err3','Scrivi un numero di telefono o un indirizzo email valido.');
+  if (!document.getElementById('privacy').checked) return errore('err3','Serve il consenso al trattamento dei dati per inviare il modulo.');
+  errore('err3','');
+
+  var dati=datiRaccolti(); dati.note=val('note');
+  var btn=document.getElementById('btn-invia'); btn.disabled=true; btn.textContent='Invio in corso...';
+
+  fetch(SUPABASE_URL+'/rest/v1/rpc/crea_richiesta_casa',{
+    method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({ p_tipo:tipo, p_comune: tipo==='offerta'?val('o-comune'):val('r-comune'),
+      p_dati:dati, p_nome:nome, p_contatto:contatto })
+  })
+  .then(function(r){ if(!r.ok) return r.text().then(function(t){throw new Error(t);}); return r.json(); })
+  .then(function(codice){
+    document.getElementById('codice').textContent=codice;
+    document.getElementById('esito-testo').textContent = tipo==='offerta'
+      ? 'Un operatore ti contatterà per il sopralluogo e per mostrarti canone, garanzie e agevolazioni.'
+      : 'Un operatore ti contatterà per un colloquio e per verificare i documenti.';
+    document.getElementById('sbar').classList.add('hidden');
+    mostra('p4');
+  })
+  .catch(function(e){
+    btn.disabled=false; btn.textContent='Invia al Comune';
+    errore('err3','Invio non riuscito. Riprova tra qualche istante. ('+String(e.message||e).slice(0,120)+')');
+  });
+}
+/* ---------- Calcolatore per il proprietario ---------- */
+var canoneToccato=false;
+function euro(n){ return '€'+Math.round(n).toLocaleString('it-IT'); }
+function num(id){ var v=parseFloat(document.getElementById(id).value); return isNaN(v)?0:v; }
+function apriCalcolo(){ document.getElementById('sbar').classList.add('hidden'); mostra('pc'); suggerisciCanone(); calcola(); }
+function esciCalcolo(){ document.getElementById('sbar').classList.remove('hidden'); vai(1); }
+function suggerisciCanone(){
+  var nota=document.getElementById('c-nota-canone');
+  var mq=num('c-mq'), unit=(typeof CANONE_MQ_INDICATIVO==='number')?CANONE_MQ_INDICATIVO:null;
+  if (unit && mq && !canoneToccato){
+    document.getElementById('c-canone').value=Math.round(mq*unit);
+    nota.textContent='Proposto con '+unit.toLocaleString('it-IT')+' €/m² al mese, valore indicativo del canone concordato nel comune. Puoi modificarlo.';
+  } else if (!unit){
+    nota.textContent='Se non lo conosci, inserisci l\'affitto che ti aspetteresti: l\'operatore ti dirà il canone concordato esatto.';
+  }
+}
+function calcola(){
+  var canone=num('c-canone')*12, imu=num('c-imu'), cond=num('c-cond'), altre=num('c-altre');
+  var aliquota=(scelte.tensione[0]==='si')?0.10:0.21;
+  var costoVuota=imu+cond+altre;
+  var tasse=canone*aliquota, imuRidotta=imu*0.75;
+  var netto=canone-tasse-imuRidotta;
+  var diff=netto+costoVuota;
+  var box=document.getElementById('c-esito');
+  if (!canone && !costoVuota){ box.innerHTML='<div class="riga">Inserisci almeno l\'affitto e l\'IMU per vedere il confronto.</div>'; return; }
+  box.innerHTML=
+    '<div class="riga neg"><span>Tenerla vuota ti costa</span><b>− '+euro(costoVuota)+' / anno</b></div>'+
+    '<div class="riga"><span>Affitto incassato</span><b>'+euro(canone)+'</b></div>'+
+    '<div class="riga"><span>Cedolare secca '+(aliquota*100)+'%</span><b>− '+euro(tasse)+'</b></div>'+
+    '<div class="riga"><span>IMU ridotta del 25%</span><b>− '+euro(imuRidotta)+'</b></div>'+
+    '<div class="riga"><span>Affittata ti resta</span><b>'+euro(netto)+' / anno</b></div>'+
+    '<div class="riga tot"><span>Differenza rispetto a tenerla vuota</span><b>+ '+euro(diff)+' / anno</b></div>';
+}
+function daCalcoloAOfferta(){
+  var mq=document.getElementById('c-mq').value;
+  if (mq) document.getElementById('o-mq').value=mq;
+  document.getElementById('sbar').classList.remove('hidden');
+  scegli('offerta');
+}
+document.querySelectorAll('.pill.sel').forEach(function(p){p.setAttribute('aria-pressed','true');});
+document.querySelector('[data-gruppo="tensione"]').addEventListener('click',function(){ setTimeout(calcola,0); });
+if ('serviceWorker' in navigator) window.addEventListener('load',function(){ navigator.serviceWorker.register('./sw.js').catch(function(){}); });
+</script>
+</body>
+</html>
